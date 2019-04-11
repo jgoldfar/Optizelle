@@ -1,0 +1,49 @@
+dist: xenial
+
+sudo: false
+
+language: cpp
+
+compiler:
+  - clang
+  - gcc
+
+os:
+  - linux
+  - osx
+
+matrix:
+  allow_failures:
+    - os: osx
+
+addons:
+  apt:
+    packages:
+      - libpython-all-dev
+      - libblas-dev
+      - liblapack-dev
+  homebrew:
+    packages:
+      - gcc
+      - python@2
+      - openblas
+      - lapack
+
+#TODO: Enable Octave 
+script:
+  # Install JSONcpp
+  - git clone https://github.com/open-source-parsers/jsoncpp.git ${TRAVIS_BUILD_DIR}/jsoncpp
+  - mkdir -p ${TRAVIS_BUILD_DIR}/jsoncpp/build
+  - cd ${TRAVIS_BUILD_DIR}/jsoncpp/build
+  - cmake -DCMAKE_INSTALL_INCLUDEDIR=include/jsoncpp -DCMAKE_BUILD_TYPE=debug -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=${TRAVIS_BUILD_DIR}/usr ..
+  - make && make install
+  # Install JSONLab
+  #- git clone https://github.com/fangq/jsonlab.git ${TRAVIS_BUILD_DIR}/jsonlab
+  # Add -DJSONLAB_DIR=${TRAVIS_BUILD_DIR}/jsonlab
+  - mkdir -p ${TRAVIS_BUILD_DIR}/build
+  - cd ${TRAVIS_BUILD_DIR}/build
+  - if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then export DYLIB_EXT=dylib; fi
+  - if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then export DYLIB_EXT=so; fi
+  - cmake -DCMAKE_INSTALL_PREFIX=${TRAVIS_BUILD_DIR}/usr -DJSONCPP_LIBRARY=${TRAVIS_BUILD_DIR}/usr/lib/libjsoncpp.${DYLIB_EXT} -DJSONCPP_INCLUDE_DIR=${TRAVIS_BUILD_DIR}/usr/include/jsoncpp -DCMAKE_BUILD_TYPE=Debug -DENABLE_PYTHON=ON -DENABLE_OCTAVE=OFF -DENABLE_MATLAB=OFF ..;
+  - make
+  - make install
